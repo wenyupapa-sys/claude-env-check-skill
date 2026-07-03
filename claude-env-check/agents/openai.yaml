@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude Env Check"
+  short_description: "Detect Claude Code proxy and timezone risk"
+  default_prompt: "Use $claude-env-check to audit my Claude Code proxy, timezone, DNS, and environment-variable risk."
