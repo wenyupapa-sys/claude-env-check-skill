@@ -1,10 +1,22 @@
-# Claude Env Check Skill
+# Claude Env Check
 
-A reusable Codex/OpenAI skill for auditing local Claude Code environment risk signals: proxy/VPN/TUN state, macOS system proxy visibility, timezone consistency, proxy environment variables, Anthropic/Claude base URL residue, exit IP, IPv6, and DNS leak heuristics.
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-The bundled checker is read-only. It prints findings and recommendations, but it does not modify timezone, proxy, shell, VPN, or app settings.
+Claude Env Check is a read-only local diagnostic tool and Codex skill for auditing Claude Code environment risk signals: proxy/VPN/TUN state, macOS system proxy visibility, timezone consistency, proxy environment variables, Anthropic/Claude base URL residue, exit IP, IPv6, and DNS leak heuristics.
+
+Product page: https://wenyupapa-sys.github.io/claude-env-check-skill/
+
+The checker prints findings and recommendations. It does not modify timezone, proxy, shell, VPN, or app settings.
 
 ## Install
+
+One-line install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wenyupapa-sys/claude-env-check-skill/main/install.sh | bash
+```
+
+Or install from a cloned checkout:
 
 ```bash
 git clone https://github.com/wenyupapa-sys/claude-env-check-skill.git
@@ -24,24 +36,36 @@ Set `CODEX_SKILLS_DIR` if your skills directory is elsewhere:
 CODEX_SKILLS_DIR="$HOME/.agents/skills" ./install.sh
 ```
 
-## Use
-
-In Codex or another compatible agent, ask:
-
-```text
-Use $claude-env-check to audit my Claude Code proxy, timezone, DNS, and environment-variable risk.
-```
-
-You can also run the checker directly:
+The installer also creates a CLI at `~/.local/bin/claude-env-check` when possible. Add this to your shell profile if `~/.local/bin` is not already on `PATH`:
 
 ```bash
-bash ~/.codex/skills/claude-env-check/scripts/claude-env-check.sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+## Use As A CLI
+
+```bash
+claude-env-check
 ```
 
 Offline mode skips network checks:
 
 ```bash
-bash ~/.codex/skills/claude-env-check/scripts/claude-env-check.sh --offline
+claude-env-check --offline
+```
+
+Without installing the CLI:
+
+```bash
+bash ~/.codex/skills/claude-env-check/scripts/claude-env-check.sh
+```
+
+## Use As A Codex Skill
+
+In Codex or another compatible agent, ask:
+
+```text
+Use $claude-env-check to audit my Claude Code proxy, timezone, DNS, and environment-variable risk.
 ```
 
 ## What It Checks
@@ -54,9 +78,22 @@ bash ~/.codex/skills/claude-env-check/scripts/claude-env-check.sh --offline
 - IPv4/IPv6 exit country and simple DNS leak heuristics
 - BrowserLeaks and ipleak.net retest links
 
+## Example Output
+
+```text
+PASS: Node.js timezone is America/Los_Angeles
+FAIL: macOS system proxy is enabled at 127.0.0.1:10808
+WARN: Homebrew mirror points to a regional mirror
+INFO: Browser retest links for BrowserLeaks and ipleak.net
+```
+
 ## Notes
 
-This skill is a diagnostic aid, not a guarantee that an account or service will avoid risk controls. Browser-side checks still matter because a shell script cannot fully inspect browser WebRTC, TLS, HTTP, or profile-level behavior.
+This is a diagnostic aid, not a guarantee that an account or service will avoid risk controls. Browser-side checks still matter because a shell script cannot fully inspect browser WebRTC, TLS, HTTP, or profile-level behavior.
+
+## Contributing
+
+Bug reports, false positives, new platform checks, and clearer remediation guidance are welcome. Please keep the checker read-only by default.
 
 ## License
 

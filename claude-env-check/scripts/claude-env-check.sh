@@ -390,7 +390,12 @@ fi
 
 section "6. 本地代理进程与端口"
 
-PROC_HITS="$(pgrep -fl 'clash|mihomo|surge|v2ray|v2rayN|xray|sing-box|hysteria|trojan|shadowsocks|ss-local' 2>/dev/null || true)"
+PROC_HITS="$(
+  ps -axo pid=,command= 2>/dev/null \
+    | grep -Ei 'clash|mihomo|surge|v2ray|v2rayN|xray|sing-box|hysteria|trojan|shadowsocks|ss-local' \
+    | grep -Ev 'grep -Ei|claude-env-check|claude-code-env-check' \
+    || true
+)"
 if [ -n "$PROC_HITS" ]; then
   info "发现代理相关进程:"
   printf '%s\n' "$PROC_HITS" | while IFS= read -r line; do

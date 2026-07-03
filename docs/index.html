@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Claude Env Check is a read-only local diagnostic tool and Codex skill for checking Claude Code proxy, timezone, DNS, and environment residue risks.">
+    <title>Claude Env Check</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172026;
+        --muted: #52606b;
+        --line: #d7dde2;
+        --panel: #f7f9fb;
+        --surface: #ffffff;
+        --accent: #14746f;
+        --accent-dark: #0b4f4a;
+        --warn: #9a6700;
+        --fail: #b42318;
+        --pass: #067647;
+        --terminal: #101820;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: var(--surface);
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--accent-dark);
+      }
+
+      .wrap {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.94);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      nav {
+        min-height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .brand {
+        font-weight: 750;
+        font-size: 18px;
+      }
+
+      .navlinks {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 16px;
+        border-radius: 6px;
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .button.secondary {
+        color: var(--accent-dark);
+        background: white;
+      }
+
+      main {
+        display: block;
+      }
+
+      .hero {
+        padding: 72px 0 56px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 0.86fr);
+        gap: 48px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        color: var(--accent-dark);
+        font-weight: 800;
+        font-size: 13px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 12px 0 16px;
+        font-size: clamp(40px, 7vw, 76px);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        max-width: 650px;
+        color: var(--muted);
+        font-size: 20px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .terminal {
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--terminal);
+        color: #d7f4e7;
+        box-shadow: 0 20px 44px rgba(16, 24, 32, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .terminal-bar {
+        height: 38px;
+        background: #1b2a33;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 14px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #8ea0aa;
+      }
+
+      pre {
+        margin: 0;
+        padding: 22px;
+        overflow-x: auto;
+        font: 14px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      section {
+        padding: 56px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h2 {
+        margin: 0 0 18px;
+        font-size: 30px;
+        letter-spacing: 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 20px;
+        background: white;
+      }
+
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .steps {
+        display: grid;
+        gap: 12px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      .num {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+      }
+
+      .callout {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 20px;
+      }
+
+      .status-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .status {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+
+      .status strong {
+        min-width: 58px;
+      }
+
+      .pass {
+        color: var(--pass);
+      }
+
+      .warn {
+        color: var(--warn);
+      }
+
+      .fail {
+        color: var(--fail);
+      }
+
+      footer {
+        padding: 28px 0 40px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 840px) {
+        .hero-grid,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .navlinks {
+          display: none;
+        }
+
+        .hero {
+          padding-top: 44px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav class="wrap" aria-label="Primary navigation">
+        <div class="brand">Claude Env Check</div>
+        <div class="navlinks">
+          <a href="#install">Install</a>
+          <a href="#checks">Checks</a>
+          <a href="https://github.com/wenyupapa-sys/claude-env-check-skill">GitHub</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <div class="hero">
+        <div class="wrap hero-grid">
+          <div>
+            <div class="eyebrow">Read-only local diagnostics</div>
+            <h1>Claude Env Check</h1>
+            <p class="lead">Audit Claude Code proxy, timezone, DNS, IPv6, TUN, and environment-variable residue before they turn into confusing routing or fingerprint problems.</p>
+            <div class="actions">
+              <a class="button" href="#install">Install</a>
+              <a class="button secondary" href="https://github.com/wenyupapa-sys/claude-env-check-skill">View Source</a>
+            </div>
+          </div>
+          <div class="terminal" aria-label="Example terminal output">
+            <div class="terminal-bar">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+            <pre><code>$ claude-env-check
+[PASS] Node.js timezone: America/Los_Angeles
+[FAIL] macOS system proxy: 127.0.0.1:10808
+[WARN] Homebrew mirror uses a regional source
+[INFO] Browser retest: browserleaks.com/ip
+
+PASS: 8  WARN: 2  FAIL: 1  INFO: 12</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <section id="install">
+        <div class="wrap">
+          <h2>Install</h2>
+          <div class="terminal">
+            <div class="terminal-bar">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+            <pre><code>curl -fsSL https://raw.githubusercontent.com/wenyupapa-sys/claude-env-check-skill/main/install.sh | bash
+
+claude-env-check
+claude-env-check --offline</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="checks">
+        <div class="wrap">
+          <h2>What It Checks</h2>
+          <div class="grid">
+            <article class="card">
+              <h3>Timezone</h3>
+              <p>Compares macOS and Node.js timezone surfaces and flags China timezone mismatch risks.</p>
+            </article>
+            <article class="card">
+              <h3>Proxy Visibility</h3>
+              <p>Reads macOS system proxy state and common proxy environment variables without changing them.</p>
+            </article>
+            <article class="card">
+              <h3>Network Exit</h3>
+              <p>Checks IPv4, IPv6, DNS heuristics, TUN hints, and browser retest links for final confirmation.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <h2>Use With Codex</h2>
+          <div class="callout">
+            <p>After installation, ask your agent:</p>
+            <pre><code>Use $claude-env-check to audit my Claude Code proxy, timezone, DNS, and environment-variable risk.</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <h2>Interpreting Results</h2>
+          <div class="status-list">
+            <div class="status"><strong class="fail">FAIL</strong><span>High-risk signal that should be handled before relying on the environment.</span></div>
+            <div class="status"><strong class="warn">WARN</strong><span>Suspicious residue or mismatch that needs human review.</span></div>
+            <div class="status"><strong class="pass">PASS</strong><span>No issue found for that specific local check.</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">MIT licensed. Diagnostic aid only; it cannot guarantee account or service outcomes.</div>
+    </footer>
+  </body>
+</html>
